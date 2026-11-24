@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Keep track of doctor appointments and clinic visits in SehatCall.">
+  <meta name="theme-color" content="#0d6e63">
+  <title>Appointments — SehatCall</title>
+
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem('sehatcall.theme');
+        var dark = pref === 'dark' || (pref !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        var scale = parseFloat(localStorage.getItem('sehatcall.textsize') || '1');
+        if (scale && scale !== 1) document.documentElement.style.setProperty('--font-scale', String(scale));
+      } catch (e) { /* storage blocked */ }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/design-tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+
+  <div class="app-shell">
+    <div id="sidebar-root"></div>
+
+    <div class="shell-main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" type="button" id="menuBtn"
+                aria-expanded="false" aria-controls="sidebar" aria-label="Open the menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <div class="topbar__heading">
+          <h1 class="page-title">Appointments</h1>
+          <p class="page-subtitle" id="nextLine">Your doctor visits, past and coming up.</p>
+        </div>
+
+        <div class="topbar__actions">
+          <button class="btn btn--primary" type="button" id="addApptBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span>Book appointment</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="page" id="main">
+        <section class="page-section" aria-labelledby="upcomingHeading">
+          <div class="section-head">
+            <div>
+              <h2 id="upcomingHeading">Upcoming</h2>
+              <p id="upcomingCount"></p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__body card__body--flush">
+              <ul class="item-list" id="upcomingList" aria-live="polite"></ul>
+            </div>
+          </div>
+        </section>
+
+        <section class="page-section" aria-labelledby="pastHeading">
+          <div class="section-head">
+            <div>
+              <h2 id="pastHeading">Past appointments</h2>
+              <p id="pastCount"></p>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card__body card__body--flush">
+              <ul class="item-list" id="pastList" aria-live="polite"></ul>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <dialog class="dialog" id="apptDialog" aria-labelledby="apptDialogTitle">
+    <form id="apptForm" method="dialog" novalidate>
+      <div class="dialog__header">
+        <div>
+          <h2 class="dialog__title" id="apptDialogTitle">Book an appointment</h2>
+          <p class="dialog__subtitle" id="apptDialogSubtitle">Who are you seeing, and when?</p>
+        </div>
+        <button class="icon-btn dialog__close" type="button" data-close-dialog aria-label="Close this form">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="dialog__body">
+        <div class="form-grid">
+          <div class="field">
+            <label class="label" for="aptDoctor">Doctor's name <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="text" id="aptDoctor" name="doctor" required
+                   aria-describedby="aptDoctor-error" placeholder="For example, Dr. Anita Rao">
+            <p class="field__error" id="aptDoctor-error" data-error-for="doctor" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="aptSpeciality">Speciality <span class="muted" style="font-weight:400">(optional)</span></label>
+            <input class="input" type="text" id="aptSpeciality" name="speciality"
+                   placeholder="For example, Cardiologist">
+          </div>
+
+          <div class="field">
+            <label class="label" for="aptDate">Date <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="date" id="aptDate" name="date" required
+                   aria-describedby="aptDate-error">
+            <p class="field__error" id="aptDate-error" data-error-for="date" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="aptTime">Time <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="time" id="aptTime" name="time" required
+                   aria-describedby="aptTime-error">
+            <p class="field__error" id="aptTime-error" data-error-for="time" aria-live="polite"></p>
+          </div>
+
+          <div class="field field--full">
+            <label class="label" for="aptLocation">Where <span class="muted" style="font-weight:400">(optional)</span></label>
+            <input class="input" type="text" id="aptLocation" name="location"
+                   placeholder="For example, City Heart Clinic, Room 4">
+            <p class="field__hint">The clinic, building or room. This is also saved into the calendar file.</p>
+          </div>
+
+          <div class="field field--full">
+            <label class="label" for="aptNotes">Notes <span class="muted" style="font-weight:400">(optional)</span></label>
+            <textarea class="textarea" id="aptNotes" name="notes"
+                      placeholder="For example, bring the blood pressure diary, or fasting test the day before"></textarea>
+          </div>
+        </div>
+
+        <p class="form-status" id="apptStatus" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="dialog__footer">
+        <button class="btn btn--secondary" type="button" data-close-dialog>Cancel</button>
+        <button class="btn btn--primary" type="submit" id="saveApptBtn">
+          <span>Save appointment</span>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/appointments.js"></script>
+</body>
+</html>

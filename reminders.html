@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="A full history of every medicine reminder in SehatCall: what was taken, missed or skipped.">
+  <meta name="theme-color" content="#0d6e63">
+  <title>Reminder history — SehatCall</title>
+
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem('sehatcall.theme');
+        var dark = pref === 'dark' || (pref !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        var scale = parseFloat(localStorage.getItem('sehatcall.textsize') || '1');
+        if (scale && scale !== 1) document.documentElement.style.setProperty('--font-scale', String(scale));
+      } catch (e) { /* storage blocked */ }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/design-tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+
+  <div class="app-shell">
+    <div id="sidebar-root"></div>
+
+    <div class="shell-main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" type="button" id="menuBtn"
+                aria-expanded="false" aria-controls="sidebar" aria-label="Open the menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <div class="topbar__heading">
+          <h1 class="page-title">Reminder history</h1>
+          <p class="page-subtitle" id="rangeLine"></p>
+        </div>
+
+        <div class="topbar__actions">
+          <button class="btn btn--secondary" type="button" id="exportCsvBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <path d="m7 10 5 5 5-5"/><path d="M12 15V3"/>
+            </svg>
+            <span>Export CSV</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="page" id="main">
+        <section class="card page-section" aria-labelledby="summaryHeading">
+          <div class="card__header">
+            <div>
+              <h2 class="card__title" id="summaryHeading">How it has been going</h2>
+              <p class="page-subtitle">Based on the dates selected below.</p>
+            </div>
+          </div>
+          <div class="summary-strip" id="summaryStrip"></div>
+        </section>
+
+        <section class="card page-section" aria-labelledby="historyHeading">
+          <div class="card__header">
+            <div>
+              <h2 class="card__title" id="historyHeading">Every reminder</h2>
+              <p class="page-subtitle" id="rowCount"></p>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="field">
+              <label class="label" for="statusFilter">Status</label>
+              <select class="select" id="statusFilter" name="status">
+                <option value="all">Everything</option>
+                <option value="taken">Taken</option>
+                <option value="missed">Missed</option>
+                <option value="skipped">Skipped</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="fromDate">From</label>
+              <input class="input" type="date" id="fromDate" name="from">
+            </div>
+
+            <div class="field">
+              <label class="label" for="toDate">To</label>
+              <input class="input" type="date" id="toDate" name="to">
+            </div>
+
+            <div class="filter-bar__actions">
+              <button class="btn btn--secondary btn--sm" type="button" data-range="7">Last 7 days</button>
+              <button class="btn btn--secondary btn--sm" type="button" data-range="14">Last 14 days</button>
+              <button class="btn btn--quiet btn--sm" type="button" id="clearFiltersBtn">Clear</button>
+            </div>
+          </div>
+
+          <div class="card__body card__body--flush">
+            <div class="table-wrap">
+              <table class="table" id="historyTable">
+                <caption class="visually-hidden">
+                  Each scheduled dose, with whether it was taken, missed or skipped.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Medicine</th>
+                    <th scope="col">Dose</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Recorded</th>
+                    <th scope="col"><span class="visually-hidden">Action</span></th>
+                  </tr>
+                </thead>
+                <tbody id="historyBody"></tbody>
+              </table>
+            </div>
+            <div id="historyEmpty"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/reminders.js"></script>
+</body>
+</html>

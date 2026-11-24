@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Add, edit and pause the medicines SehatCall reminds you to take.">
+  <meta name="theme-color" content="#0d6e63">
+  <title>My medicines — SehatCall</title>
+
+  <script>
+    (function () {
+      try {
+        var pref = localStorage.getItem('sehatcall.theme');
+        var dark = pref === 'dark' || (pref !== 'light' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.setAttribute('data-theme', 'dark');
+        var scale = parseFloat(localStorage.getItem('sehatcall.textsize') || '1');
+        if (scale && scale !== 1) document.documentElement.style.setProperty('--font-scale', String(scale));
+      } catch (e) { /* storage blocked */ }
+    })();
+  </script>
+
+  <link rel="stylesheet" href="/design-tokens.css">
+  <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the main content</a>
+
+  <div class="app-shell">
+    <div id="sidebar-root"></div>
+
+    <div class="shell-main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" type="button" id="menuBtn"
+                aria-expanded="false" aria-controls="sidebar" aria-label="Open the menu">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+
+        <div class="topbar__heading">
+          <h1 class="page-title">My medicines</h1>
+          <p class="page-subtitle" id="pageSubtitle">Every medicine you have added, and when it is due.</p>
+        </div>
+
+        <div class="topbar__actions">
+          <button class="btn btn--primary" type="button" id="addMedicineBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+            <span>Add medicine</span>
+          </button>
+        </div>
+      </header>
+
+      <main class="page" id="main">
+        <section class="card" aria-labelledby="listHeading">
+          <div class="card__header">
+            <div>
+              <h2 class="card__title" id="listHeading">Medicine list</h2>
+              <p class="page-subtitle" id="listCount"></p>
+            </div>
+          </div>
+
+          <div class="filter-bar">
+            <div class="field">
+              <label class="label" for="searchInput">Search by name</label>
+              <input class="input" type="search" id="searchInput" name="search"
+                     placeholder="For example, Metformin" autocomplete="off">
+            </div>
+            <div class="field">
+              <label class="label" for="statusFilter">Show</label>
+              <select class="select" id="statusFilter" name="status">
+                <option value="all">All medicines</option>
+                <option value="active">Active only</option>
+                <option value="paused">Paused only</option>
+              </select>
+            </div>
+            <div class="filter-bar__actions">
+              <button class="btn btn--secondary btn--sm" type="button" id="resetFiltersBtn">
+                Clear filters
+              </button>
+            </div>
+          </div>
+
+          <div class="card__body card__body--flush">
+            <ul class="item-list" id="medicineList" aria-live="polite"></ul>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- Add / edit medicine. A native <dialog>, so Escape, the backdrop and focus
+       trapping are handled by the browser rather than by hand. -->
+  <dialog class="dialog" id="medicineDialog" aria-labelledby="medicineDialogTitle">
+    <form id="medicineForm" method="dialog" novalidate>
+      <div class="dialog__header">
+        <div>
+          <h2 class="dialog__title" id="medicineDialogTitle">Add a medicine</h2>
+          <p class="dialog__subtitle" id="medicineDialogSubtitle">Tell us what to take and when.</p>
+        </div>
+        <button class="icon-btn dialog__close" type="button" data-close-dialog aria-label="Close this form">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M18 6 6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="dialog__body">
+        <div class="form-grid">
+          <div class="field">
+            <label class="label" for="medName">Medicine name <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="text" id="medName" name="name" required
+                   aria-describedby="medName-error" placeholder="For example, Metformin">
+            <p class="field__error" id="medName-error" data-error-for="name" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="medDose">Dose <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="text" id="medDose" name="dose" required
+                   aria-describedby="medDose-hint medDose-error" placeholder="For example, 500 mg">
+            <p class="field__hint" id="medDose-hint">How much you take each time.</p>
+            <p class="field__error" id="medDose-error" data-error-for="dose" aria-live="polite"></p>
+          </div>
+
+          <div class="field field--full">
+            <span class="label" id="timesLabel">Times of day <span class="req" aria-hidden="true">*</span></span>
+            <p class="field__hint" style="margin-top:0">
+              Add one row for each time you take it. Twice a day means two rows.
+            </p>
+            <div id="timeRows" class="stack" role="group" aria-labelledby="timesLabel"></div>
+            <p class="field__error" id="medTimes-error" data-error-for="times" aria-live="polite"></p>
+            <div class="btn-row" style="margin-top: var(--space-2)">
+              <button class="btn btn--secondary btn--sm" type="button" id="addTimeBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                     stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M12 5v14M5 12h14"/>
+                </svg>
+                <span>Add another time</span>
+              </button>
+              <button class="btn btn--quiet btn--sm" type="button" id="twiceDailyBtn">Twice a day</button>
+            </div>
+            <p class="field__hint" id="schedulePreview" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="medStart">Start date <span class="req" aria-hidden="true">*</span></label>
+            <input class="input" type="date" id="medStart" name="startDate" required
+                   aria-describedby="medStart-error">
+            <p class="field__error" id="medStart-error" data-error-for="startDate" aria-live="polite"></p>
+          </div>
+
+          <div class="field">
+            <label class="label" for="medEnd">End date <span class="muted" style="font-weight:400">(optional)</span></label>
+            <input class="input" type="date" id="medEnd" name="endDate"
+                   aria-describedby="medEnd-hint medEnd-error">
+            <p class="field__hint" id="medEnd-hint">Leave empty for a medicine you take long term.</p>
+            <p class="field__error" id="medEnd-error" data-error-for="endDate" aria-live="polite"></p>
+          </div>
+
+          <div class="field field--full">
+            <label class="label" for="medNotes">Notes <span class="muted" style="font-weight:400">(optional)</span></label>
+            <textarea class="textarea" id="medNotes" name="notes"
+                      placeholder="For example, take with food, or after breakfast"></textarea>
+          </div>
+
+          <div class="field field--full">
+            <label class="checkbox" for="medActive">
+              <input type="checkbox" id="medActive" name="active" checked>
+              <span>This medicine is active. Untick it to pause reminders without deleting the record.</span>
+            </label>
+          </div>
+        </div>
+
+        <p class="form-status" id="medicineStatus" role="status" aria-live="polite"></p>
+      </div>
+
+      <div class="dialog__footer">
+        <button class="btn btn--secondary" type="button" data-close-dialog>Cancel</button>
+        <button class="btn btn--primary" type="submit" id="saveMedicineBtn">
+          <span>Save medicine</span>
+        </button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast-region" id="toasts" role="status" aria-live="polite"></div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/medicines.js"></script>
+</body>
+</html>

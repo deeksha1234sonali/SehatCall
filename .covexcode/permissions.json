@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "kind": "",
+      "match": "exact",
+      "pattern": "interact in browser — http://127.0.0.1:8000/login.html (press Tab)",
+      "decision": "allow",
+      "createdAt": "2026-11-24T18:50:37.910Z",
+      "source": "user",
+      "scope": "always"
+    },
+    {
+      "kind": "",
+      "match": "exact",
+      "pattern": "$ del _smoke_test.py _debug.py",
+      "decision": "allow",
+      "createdAt": "2026-11-24T19:30:55.828Z",
+      "source": "user",
+      "scope": "session"
+    },
+    {
+      "kind": "",
+      "match": "exact",
+      "pattern": "$ rmdir /s /q database",
+      "createdAt": "2026-11-24T19:30:57.998Z",
+      "source": "user",
+      "decision": "allow",
+      "scope": "session"
+    }
+  ]
+}

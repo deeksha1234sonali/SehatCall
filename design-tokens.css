@@ -1,0 +1,186 @@
+/*
+  SehatCall -- design tokens.
+
+  This is the ONLY file in the project that declares a colour, a font stack,
+  a type size or a corner radius. Every other stylesheet reads from here, so
+  re-theming the app means editing this one file.
+
+  The palette was not eyeballed. Every foreground/background pairing that
+  ships -- body text, muted text, buttons, sidebar active state and all
+  three status chips, in both light and dark -- was measured for WCAG
+  contrast and clears AA for normal text (lowest is 5.6:1, most are 7:1+).
+  That matters more than usual here: this app is built for elderly users,
+  a large share of whom have reduced contrast sensitivity.
+
+  Accent choice is grounded in the subject: a clinical teal (the colour of
+  scrubs, sanitiser labels and hospital wayfinding) rather than a generic
+  SaaS blue, sitting on a warm off-white surface so the page never looks
+  like a spreadsheet.
+*/
+
+:root {
+  /* ---- colour: light (default) ---- */
+
+  /* Warm-neutral paper rather than cool grey -- easier on the eye for long
+     reading and it keeps the teal from looking sterile. */
+  --surface: #f6f8f7;
+  --surface-raised: #ffffff;
+  --surface-sunken: #eef2f1;
+  --border: #d8e0de;
+  --border-strong: #b6c3c0;
+
+  --text: #12211f;
+  --text-muted: #56675f;
+
+  --accent: #0d6e63;
+  --accent-hover: #0a5d54;
+  --accent-active: #084b43;
+  --accent-contrast: #ffffff;
+  --accent-soft: #dcefeb;
+
+  /* Semantic colour is separate from the accent and never doubles as it. */
+  --success: #146c3c;
+  --success-soft: #e7f4ec;
+  --warning: #6f4300;
+  --warning-soft: #fff4de;
+  --danger: #a3201a;
+  --danger-soft: #fdecea;
+  --danger-contrast: #ffffff;
+  --success-contrast: #ffffff;
+  --info: #14507a;
+  --info-soft: #e8f0fb;
+
+  /* Status chips -- one token pair per reminder/appointment state so a
+     status reads as itself on every page. Each is accompanied by a text
+     label in the markup, never colour alone. */
+  --status-taken-fg: #146c3c;
+  --status-taken-bg: #e7f4ec;
+  --status-missed-fg: #8f1d18;
+  --status-missed-bg: #fdecea;
+  --status-upcoming-fg: #14507a;
+  --status-upcoming-bg: #e8f0fb;
+  --status-paused-fg: #5b4a12;
+  --status-paused-bg: #fbf1d6;
+  --status-done-fg: #3f4a56;
+  --status-done-bg: #eceff2;
+
+  --focus-ring: #0d6e63;
+  --overlay: rgba(18, 33, 31, 0.55);
+
+  /* ---- type ---- */
+
+  /* Atkinson Hyperlegible was drawn by the Braille Institute to maximise
+     character differentiation (I vs l vs 1, O vs 0) for readers with low
+     vision. It is the single most defensible font choice for this audience,
+     and it degrades to Segoe UI -- already present on this machine -- when
+     the webfont cannot load. */
+  --font-display: "Atkinson Hyperlegible", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Atkinson Hyperlegible", "Segoe UI", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Code", "SF Mono", Menlo, monospace;
+
+  /* Type scale is a deliberate 1.2 (minor third) ladder rather than a wide
+     1.25 jump, because large jumps make small text unusably small once the
+     user scales it up. Base is 1.125rem = 18px, not 16px. */
+  --text-xs: 0.833rem;
+  --text-sm: 0.944rem;
+  --text-base: 1.125rem;
+  --text-lg: 1.35rem;
+  --text-xl: 1.62rem;
+  --text-2xl: 1.94rem;
+  --text-3xl: 2.33rem;
+
+  /* Set on <html> by js/ui.js when the reader picks a text size. Every size
+     below is expressed in rem, so this single multiplier wins everywhere. */
+  --font-scale: 1;
+
+  --leading-tight: 1.2;
+  --leading-body: 1.65;
+
+  /* ---- spacing: 4px base unit ---- */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+
+  /* ---- shape ----
+     Modest radii. A healthcare intake app should not look like a consumer
+     social product, and pill-shaped everything reads as less serious. */
+  --radius-sm: 4px;
+  --radius: 8px;
+  --radius-lg: 12px;
+
+  --shadow-sm: 0 1px 2px rgba(18, 33, 31, 0.06);
+  --shadow-md: 0 4px 16px rgba(18, 33, 31, 0.1);
+  --shadow-lg: 0 12px 40px rgba(18, 33, 31, 0.18);
+
+  /* Minimum hit area. Guidelines for older users usually suggest 44-48px;
+     this project takes 48px as the floor for anything tappable. */
+  --tap-target: 48px;
+
+  --sidebar-width: 268px;
+  --topbar-height: 72px;
+  --content-max: 1180px;
+}
+
+/*
+  Dark mode is selected by `data-theme="dark"` on <html> rather than by a
+  prefers-color-scheme media query. That is deliberate: a manual toggle and a
+  media query cannot both own the same tokens without declaring the whole
+  palette twice, and duplicated palettes drift. Every page sets data-theme
+  from a three-line inline script in its <head> (before first paint, so there
+  is no flash) using the saved preference, falling back to the OS setting.
+  The toggle in the sidebar then just rewrites that attribute.
+*/
+:root[data-theme="dark"] {
+  /* Not an inverted light theme: the surfaces carry a faint teal cast so the
+     dark mode still reads as this product rather than as grey chrome. */
+  --surface: #0f1716;
+  --surface-raised: #16211f;
+  --surface-sunken: #0b1211;
+  --border: #2a3835;
+  --border-strong: #3d4f4b;
+
+  --text: #e7efed;
+  --text-muted: #a3b4ae;
+
+  --accent: #5fd0bd;
+  --accent-hover: #7ddccb;
+  --accent-active: #9ee5d7;
+  --accent-contrast: #06231d;
+  --accent-soft: #14312c;
+
+  --success: #86e0ad;
+  --success-soft: #14261c;
+  --warning: #f0c274;
+  --warning-soft: #2b2314;
+  --danger: #f3a49c;
+  --danger-soft: #2a1614;
+  /* Inverted from light mode: on a pale coral fill the label must be dark. */
+  --danger-contrast: #2a1614;
+  --success-contrast: #14261c;
+  --info: #9dc4ef;
+  --info-soft: #122234;
+
+  --status-taken-fg: #86e0ad;
+  --status-taken-bg: #14261c;
+  --status-missed-fg: #f3a49c;
+  --status-missed-bg: #2a1614;
+  --status-upcoming-fg: #9dc4ef;
+  --status-upcoming-bg: #122234;
+  --status-paused-fg: #f0c274;
+  --status-paused-bg: #2b2314;
+  --status-done-fg: #b8c3cc;
+  --status-done-bg: #1c2729;
+
+  --focus-ring: #5fd0bd;
+  --overlay: rgba(0, 0, 0, 0.7);
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.6);
+}
